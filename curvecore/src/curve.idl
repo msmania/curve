@@ -1,0 +1,20 @@
+[
+  uuid(25333834-45b8-496d-a1d9-63bc7b3564e3),
+  version(1.0)
+]
+interface curve
+{
+  import "oaidl.idl";
+  HRESULT Navigate([in, string] const wchar_t *url,
+                   [in] unsigned int viewWidth,
+                   [in] unsigned int viewHeight,
+                   [in] boolean async);
+  HRESULT Capture([in] unsigned short bitCount,
+                  [out] unsigned int *width,
+                  [out] unsigned int *height,
+                  [in, string, ptr] const wchar_t *saveOnServer);
+  HRESULT EnsureFileMapping([in, string, ptr] const wchar_t *filepath,
+                            [in] boolean forceUpdate,
+                            [out, retval] unsigned long *handleForClient);
+  void Shutdown();
+}

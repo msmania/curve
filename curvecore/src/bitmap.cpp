@@ -301,23 +301,24 @@ DIB DIB::CaptureFromHDC(HDC sourceDC,
                  SRCCOPY)) {
         // There is no meaning to initialize the color table because
         // GetDIBits overwrites it anyway.
-        auto newDib = CreateNew(sourceDC,
-                                bitCount,
-                                width,
-                                height,
-                                section,
-                                /*initWithGrayscaleTable*/false);
-        if (GetDIBits(sourceDC,
-                      compatibleBitmap,
-                      0,
-                      height,
-                      newDib.bits_,
-                      newDib.info_.As<BITMAPINFO>(),
-                      DIB_RGB_COLORS)) {
-          dib = std::move(newDib);
-        }
-        else {
-          Log(L"GetDIBits failed - %08x\n", GetLastError());
+        if (auto newDib = CreateNew(sourceDC,
+                                    bitCount,
+                                    width,
+                                    height,
+                                    section,
+                                    /*initWithGrayscaleTable*/false)) {
+          if (GetDIBits(sourceDC,
+                        compatibleBitmap,
+                        0,
+                        height,
+                        newDib.bits_,
+                        newDib.info_.As<BITMAPINFO>(),
+                        DIB_RGB_COLORS)) {
+            dib = std::move(newDib);
+          }
+          else {
+            Log(L"GetDIBits failed - %08x\n", GetLastError());
+          }
         }
       }
       else {

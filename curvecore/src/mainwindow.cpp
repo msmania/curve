@@ -247,7 +247,7 @@ LRESULT MainWindow::HandleMessage(UINT msg, WPARAM w, LPARAM l) {
     switch (LOWORD(w)) {
     case ID_BROWSE:
       if (CComPtr<IWebBrowser> wb = container_.GetBrowser()) {
-        Log(L"Start navigation to %p\n", command_.get_url());
+        Log(L"Start navigation to %s\n", command_.get_url());
         HRESULT hr = wb->Navigate(command_.get_url(),
                                   /*Flags*/nullptr,
                                   /*TargetFrameName*/nullptr,

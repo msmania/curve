@@ -60,7 +60,9 @@ bool GrayscaleDiffOpenCV(curve::SimpleBitmap &image1,
                          curve::DiffOutput &result,
                          LPCSTR diffOutput1,
                          LPCSTR diffOutput2) {
-  if (image1.bitCount_ != 8 || image2.bitCount_ != 8) {
+  if (image1.bitCount_ != 8 || image2.bitCount_ != 8
+      || image1.width_ == 0 || image1.height_ == 0
+      || image2.width_ == 0 || image2.height_ == 0) {
     return false;
   }
 

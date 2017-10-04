@@ -409,8 +409,7 @@ void BatchRun(std::istream &is,
   auto view1 = map1.CreateMappedView(FILE_MAP_READ, 0);
   auto view2 = map2.CreateMappedView(FILE_MAP_READ, 0);
 
-  std::string line;
-  for (int i = 0; std::getline(is, line); ++i) {
+  for (std::string line; std::getline(is, line); ) {
     if (line.size() > 0
         && line[0] != '#'
         && line[0] != ';') {
@@ -419,6 +418,7 @@ void BatchRun(std::istream &is,
       for (std::string token; std::getline(iss, token, '\t'); )
         cols.push_back(token);
 
+      const auto id = cols[colId].c_str();
       if (cols.size() > colHeight) {
         const auto urlBlob = toWideString(cols[colUrl].c_str());
         const auto url = urlBlob.As<WCHAR>();
@@ -427,12 +427,13 @@ void BatchRun(std::istream &is,
         const auto diff2 = cols.size() > colDiff2 && cols[colDiff2].size() > 0
                          ? cols[colDiff2].c_str() : nullptr;
         SimpleBitmap image1, image2;
-        if (SUCCEEDED(NavigateAndCapture(cl1, cl2,
-                                         url,
-                                         atoi(cols[colWidth].c_str()),
-                                         atoi(cols[colHeight].c_str()),
-                                         atoi(cols[colWait].c_str()),
-                                         image1, image2))) {
+        hr = NavigateAndCapture(cl1, cl2,
+                                url,
+                                atoi(cols[colWidth].c_str()),
+                                atoi(cols[colHeight].c_str()),
+                                atoi(cols[colWait].c_str()),
+                                image1, image2);
+        if (SUCCEEDED(hr)) {
           image1.bits_ = view1;
           image2.bits_ = view2;
           DiffOutput output;
@@ -444,9 +445,12 @@ void BatchRun(std::istream &is,
                 output.psnr_smooth);
           }
         }
+        else {
+          Log(L"E> id:%hs NavigateAndCapture failed - %08x\n", id, hr);
+        }
       }
       else {
-        Log(L"E> Skipping invalid line#%d\n", i);
+        Log(L"E> %id:%hs Skipping invalid line\n", id);
       }
     }
   }

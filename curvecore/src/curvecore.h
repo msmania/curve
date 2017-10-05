@@ -43,8 +43,9 @@ struct DiffInput {
 };
 
 struct DiffOutput {
-  double psnr_area;
-  double psnr_smooth;
+  double psnr_area_vs_smooth;
+  double psnr_target_vs_area;
+  double psnr_target_vs_smooth;
 };
 
 struct SimpleBitmap {

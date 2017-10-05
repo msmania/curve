@@ -97,8 +97,10 @@ bool GrayscaleDiffOpenCV(curve::SimpleBitmap &image1,
   cv::resize(im1, im_resize_area, im2.size(), 0, 0, cv::INTER_AREA);
   cv::resize(im1, im_resize_smooth, im2.size(), 0, 0, cv::INTER_LINEAR);
 
-  result.psnr_area = getPSNR(im2, im_resize_area);
-  result.psnr_smooth = getPSNR(im2, im_resize_smooth);
+  result.psnr_area_vs_smooth = getPSNR(im_resize_area, im_resize_smooth);
+  result.psnr_target_vs_area = getPSNR(im2, im_resize_area);
+  result.psnr_target_vs_smooth = getPSNR(im2, im_resize_smooth);
+
   if (diffOutput1) {
     auto diff = GenerateRedBlueDiffImage(im2, im_resize_area);
     cv::flip(diff, diff, 0);

@@ -438,15 +438,20 @@ void BatchRun(std::istream &is,
           image2.bits_ = view2;
           DiffOutput output;
           if (GrayscaleDiffOpenCV(image1, image2, output, diff1, diff2)) {
-            Log(L"%hs\t%hs\t%f\t%f\n",
+            Log(L"%hs\t%hs\t%f\t%f\t%f\n",
                 cols[colId].c_str(),
                 cols[colUrl].c_str(),
-                output.psnr_area,
-                output.psnr_smooth);
+                output.psnr_area_vs_smooth,
+                output.psnr_target_vs_area,
+                output.psnr_target_vs_smooth);
           }
         }
         else {
           Log(L"E> id:%hs NavigateAndCapture failed - %08x\n", id, hr);
+          if (HRESULT_CODE(hr) == RPC_S_SERVER_UNAVAILABLE
+              || HRESULT_CODE(hr) == ERROR_BUSY) {
+            break;
+          }
         }
       }
       else {

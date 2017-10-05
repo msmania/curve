@@ -77,7 +77,10 @@ int wmain(int argc, wchar_t *argv[]) {
     in.diffOutput2 = argc >= 12 ? argv[11] : nullptr;
     DiffOutput out;
     if (SUCCEEDED(DiffImage(in, out))) {
-      Log(L"Diff score: %f %f\n", out.psnr_area, out.psnr_smooth);
+      Log(L"Diff score: %f %f %f\n",
+          out.psnr_area_vs_smooth,
+          out.psnr_target_vs_area,
+          out.psnr_target_vs_smooth);
     }
   }
   else if (argc >= 6 && wcscmp(argv[1], L"-batch") == 0) {

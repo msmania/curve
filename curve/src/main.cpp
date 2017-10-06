@@ -27,7 +27,7 @@ void show_usage() {
     << L"  -d <endpoint1> <endpoint2>" << std::endl
     << L"     <url> <wait> <viewWidth> <viewHeight>" << std::endl
     << L"     <backFile1> <backFile1> <algo> [diffImage]  -- Image diff'ing" << std::endl
-    << L"     (algo: 0=skip | 1=average | 2=max | 3=min | 4=OpenCV)" << std::endl
+    << L"     (algo: 0=skip | 1=average | 2=max | 3=min | 4=triangle | 5=erosion)" << std::endl
     << L"  -batch <endpoint> <bitCount>" << std::endl
     << L"         <backFile1> <backFile1>                 -- Batch run" << std::endl
     << std::endl;

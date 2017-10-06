@@ -34,7 +34,8 @@ enum DiffAlgorithm : unsigned int {
   averageDiff,
   maxDiff,
   minDiff,
-  useOpenCV,
+  triangle,
+  erosionDiff,
 };
 
 struct DiffInput {

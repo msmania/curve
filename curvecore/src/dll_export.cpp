@@ -429,7 +429,7 @@ void BatchRun(std::istream &is,
           image1.bits_ = view1;
           image2.bits_ = view2;
           DiffOutput output;
-          if (GrayscaleDiff(useOpenCV,
+          if (GrayscaleDiff(erosionDiff,
                             image1,
                             image2,
                             output,

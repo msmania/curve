@@ -54,6 +54,21 @@ static double getPSNR(const cv::Mat &I1, const cv::Mat &I2) {
   }
 }
 
+static double getPSNR(const cv::Mat &I) {
+  cv::Mat I_32f;
+  I.convertTo(I_32f, CV_32F);
+  I_32f = I_32f.mul(I_32f);
+  double sse = cv::sum(I_32f).val[0];
+  if (sse <= 1e-10)
+    return 0;
+  else {
+    double mse = sse / I.total();
+    double psnr = 10.0 * log10((255 * 255) / mse);
+    // Log(L"%f %f %f\n", sse, mse, psnr);
+    return psnr;
+  }
+}
+
 static cv::Mat GenerateRedBlueDiffImage(const cv::Mat &im1, const cv::Mat &im2) {
   static INIT_ONCE initOnce = INIT_ONCE_STATIC_INIT;
   static cv::Mat lut(1, 256, CV_8UC3);
@@ -82,7 +97,8 @@ static cv::Mat GenerateRedBlueDiffImage(const cv::Mat &im1, const cv::Mat &im2) 
   return im_diff_color;
 }
 
-static bool GrayscaleDiffOpenCV(curve::SimpleBitmap &im_smaller,
+static bool GrayscaleDiffOpenCV(curve::DiffAlgorithm algo,
+                                curve::SimpleBitmap &im_smaller,
                                 curve::SimpleBitmap &im_bigger,
                                 curve::DiffOutput &result,
                                 LPCSTR diffImagePath) {
@@ -90,28 +106,44 @@ static bool GrayscaleDiffOpenCV(curve::SimpleBitmap &im_smaller,
               im_smaller.width_,
               CV_8UC1,
               im_smaller.bits_,
-              im_smaller.GetLineSize());
-  cv::Mat im2(im_bigger.height_,
+              im_smaller.GetLineSize()),
+          im2(im_bigger.height_,
               im_bigger.width_,
               CV_8UC1,
               im_bigger.bits_,
-              im_bigger.GetLineSize());
+              im_bigger.GetLineSize()),
+          im_diff, im_resize_area, im_resize_linear;
 
-  // for testing
-  // cv::resize(im2, im2, cv::Size(), 2, 2, cv::INTER_LANCZOS4);
+  cv::resize(im1, im_resize_linear, im2.size(), 0, 0, cv::INTER_LINEAR);
 
-  cv::Mat im_resize_area, im_resize_smooth;
-  cv::resize(im1, im_resize_area, im2.size(), 0, 0, cv::INTER_AREA);
-  cv::resize(im1, im_resize_smooth, im2.size(), 0, 0, cv::INTER_LINEAR);
+  if (algo == curve::triangle) {
+    cv::resize(im1, im_resize_area, im2.size(), 0, 0, cv::INTER_AREA);
+    result.psnr_area_vs_smooth = getPSNR(im_resize_area, im_resize_linear);
+    result.psnr_target_vs_area = getPSNR(im2, im_resize_area);
+    result.psnr_target_vs_smooth = getPSNR(im2, im_resize_linear);
+    if (diffImagePath) {
+      im_diff = GenerateRedBlueDiffImage(im2, im_resize_area);
+    }
+  }
+  else if (algo == curve::erosionDiff) {
+    const int erosion_size = 2;
+    static const auto erosion_area =
+      cv::getStructuringElement(cv::MORPH_ELLIPSE,
+                                cv::Size(2 * erosion_size + 1,
+                                         2 * erosion_size + 1),
+                                cv::Point(erosion_size, erosion_size));
 
-  result.psnr_area_vs_smooth = getPSNR(im_resize_area, im_resize_smooth);
-  result.psnr_target_vs_area = getPSNR(im2, im_resize_area);
-  result.psnr_target_vs_smooth = getPSNR(im2, im_resize_smooth);
+    cv::absdiff(im2, im_resize_linear, im_diff);
+    cv::erode(im_diff, im_diff, erosion_area);
+    result.psnr_area_vs_smooth
+      = result.psnr_target_vs_area
+      = result.psnr_target_vs_smooth
+      = getPSNR(im_diff);
+  }
 
-  if (diffImagePath) {
-    auto diff = GenerateRedBlueDiffImage(im2, im_resize_area);
-    cv::flip(diff, diff, 0);
-    cv::imwrite(diffImagePath, diff);
+  if (diffImagePath && im_diff.cols > 0) {
+    cv::flip(im_diff, im_diff, 0);
+    cv::imwrite(diffImagePath, im_diff);
   }
   return true;
 }
@@ -142,9 +174,14 @@ bool GrayscaleDiff(curve::DiffAlgorithm algo,
     return false;
   }
 
-  if (algo == curve::useOpenCV) {
+  if (algo == curve::triangle
+      || algo == curve::erosionDiff) {
     auto path_ascii = toString(diffImagePath);
-    return GrayscaleDiffOpenCV(image1, image2, result, path_ascii.As<char>());
+    return GrayscaleDiffOpenCV(algo,
+                               image1,
+                               image2,
+                               result,
+                               path_ascii.As<char>());
   }
 
   const auto lineSize1 = image1.GetLineSize();

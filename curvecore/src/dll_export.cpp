@@ -9,15 +9,14 @@
 #include <curve_rpc.h>
 #include "filemapping.h"
 #include "blob.h"
-#include "diff.h"
 #include "curvecore.h"
 
 void Log(LPCWSTR format, ...);
-bool GrayscaleDiffOpenCV(curve::SimpleBitmap &image1,
-                         curve::SimpleBitmap &image2,
-                         curve::DiffOutput &result,
-                         LPCSTR diffOutput1,
-                         LPCSTR diffOutput2);
+bool GrayscaleDiff(curve::DiffAlgorithm algo,
+                   curve::SimpleBitmap &image1,
+                   curve::SimpleBitmap &image2,
+                   curve::DiffOutput &result,
+                   LPCWSTR diffImagePath);
 
 class RpcClientBinding {
 private:
@@ -119,7 +118,7 @@ static bool EnsureFile(LPCWSTR filepath, SIZE_T filesize) {
   return ret;
 }
 
-static Blob toString(LPCWSTR wideString) {
+Blob toString(LPCWSTR wideString) {
   Blob blob;
   auto len = WideCharToMultiByte(CP_OEMCP,
                                  /*dwFlags*/0,
@@ -142,7 +141,7 @@ static Blob toString(LPCWSTR wideString) {
   return blob;
 }
 
-static Blob toWideString(LPCSTR string) {
+Blob toWideString(LPCSTR string) {
   Blob blob;
   auto len = MultiByteToWideChar(CP_OEMCP,
                                  /*dwFlags*/0,
@@ -342,12 +341,11 @@ HRESULT DiffImage(const DiffInput &input, DiffOutput &output) {
     auto view2 = map2.CreateMappedView(FILE_MAP_READ, 0);
     image1.bits_ = view1;
     image2.bits_ = view2;
-    auto str1 = toString(input.diffOutput1);
-    auto str2 = toString(input.diffOutput2);
-    auto result = GrayscaleDiffOpenCV(image1, image2,
-                                      output,
-                                      str1.As<char>(),
-                                      str2.As<char>());
+    auto result = GrayscaleDiff(input.algo,
+                                image1,
+                                image2,
+                                output,
+                                input.diffImage);
     hr = result ? S_OK : E_FAIL;
   }
 
@@ -361,8 +359,6 @@ enum InputColumn : int {
   colWait,
   colWidth,
   colHeight,
-  colDiff1,
-  colDiff2,
   colMax
 };
 
@@ -422,10 +418,6 @@ void BatchRun(std::istream &is,
       if (cols.size() > colHeight) {
         const auto urlBlob = toWideString(cols[colUrl].c_str());
         const auto url = urlBlob.As<WCHAR>();
-        const auto diff1 = cols.size() > colDiff1 && cols[colDiff1].size() > 0
-                         ? cols[colDiff1].c_str() : nullptr;
-        const auto diff2 = cols.size() > colDiff2 && cols[colDiff2].size() > 0
-                         ? cols[colDiff2].c_str() : nullptr;
         SimpleBitmap image1, image2;
         hr = NavigateAndCapture(cl1, cl2,
                                 url,
@@ -437,7 +429,11 @@ void BatchRun(std::istream &is,
           image1.bits_ = view1;
           image2.bits_ = view2;
           DiffOutput output;
-          if (GrayscaleDiffOpenCV(image1, image2, output, diff1, diff2)) {
+          if (GrayscaleDiff(useOpenCV,
+                            image1,
+                            image2,
+                            output,
+                            /*diffImage*/nullptr)) {
             Log(L"%hs\t%hs\t%f\t%f\t%f\n",
                 cols[colId].c_str(),
                 cols[colUrl].c_str(),

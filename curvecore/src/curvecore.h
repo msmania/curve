@@ -29,6 +29,14 @@ HRESULT EnsureFileMapping(LPCWSTR ep,
 DLL_EXPORTIMPORT
 HRESULT Shutdown(LPCWSTR endpoint);
 
+enum DiffAlgorithm : unsigned int {
+  skipDiff = 0,
+  averageDiff,
+  maxDiff,
+  minDiff,
+  useOpenCV,
+};
+
 struct DiffInput {
   LPCWSTR endpoint1;
   LPCWSTR endpoint2;
@@ -38,8 +46,8 @@ struct DiffInput {
   UINT viewHeight;
   LPCWSTR backFile1;
   LPCWSTR backFile2;
-  LPCWSTR diffOutput1;
-  LPCWSTR diffOutput2;
+  DiffAlgorithm algo;
+  LPCWSTR diffImage;
 };
 
 struct DiffOutput {

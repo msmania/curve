@@ -26,8 +26,8 @@ void show_usage() {
     << L"  -c <endpoint> <bitCount> <captureLocal>        -- Capture the window" << std::endl
     << L"  -d <endpoint1> <endpoint2>" << std::endl
     << L"     <url> <wait> <viewWidth> <viewHeight>" << std::endl
-    << L"     <backFile1> <backFile1>" << std::endl
-    << L"     [diffBitmap1] [diffBitmap2]                 -- Image diff'ing" << std::endl
+    << L"     <backFile1> <backFile1> <algo> [diffImage]  -- Image diff'ing" << std::endl
+    << L"     (algo: 0=skip | 1=average | 2=max | 3=min | 4=OpenCV)" << std::endl
     << L"  -batch <endpoint> <bitCount>" << std::endl
     << L"         <backFile1> <backFile1>                 -- Batch run" << std::endl
     << std::endl;
@@ -63,7 +63,7 @@ int wmain(int argc, wchar_t *argv[]) {
   else if (argc >= 5 && wcscmp(argv[1], L"-c") == 0) {
     Capture(argv[2], _wtoi(argv[3]), argv[4]);
   }
-  else if (argc >= 10 && wcscmp(argv[1], L"-d") == 0) {
+  else if (argc >= 11 && wcscmp(argv[1], L"-d") == 0) {
     DiffInput in;
     in.endpoint1 = argv[2];
     in.endpoint2 = argv[3];
@@ -73,8 +73,8 @@ int wmain(int argc, wchar_t *argv[]) {
     in.viewHeight = _wtoi(argv[7]);
     in.backFile1 = argv[8];
     in.backFile2 = argv[9];
-    in.diffOutput1 = argc >= 11 ? argv[10] : nullptr;
-    in.diffOutput2 = argc >= 12 ? argv[11] : nullptr;
+    in.algo = static_cast<DiffAlgorithm>(_wtoi(argv[10]));
+    in.diffImage = argc >= 12 ? argv[11] : nullptr;
     DiffOutput out;
     if (SUCCEEDED(DiffImage(in, out))) {
       Log(L"Diff score: %f %f %f\n",

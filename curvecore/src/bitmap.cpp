@@ -132,10 +132,12 @@ static Blob CreateBitmapInfo(LONG width,
     ih.biBitCount = bitCount;
     ih.biCompression = BI_RGB;
     if (initWithGrayscaleTable) {
-      int delta = colorTableEntries >= 2 ? (255 / (colorTableEntries - 1)) : 0;
+      const int delta = colorTableEntries >= 2
+                        ? (255 / (colorTableEntries - 1))
+                        : 0;
       for (int i = 0; i < colorTableEntries; ++i) {
         auto &col = p->bmiColors[i];
-        col.rgbRed = col.rgbGreen = col.rgbBlue = i * delta;
+        col.rgbRed = col.rgbGreen = col.rgbBlue = static_cast<BYTE>(i * delta);
         col.rgbReserved = 0;
       }
     }
@@ -333,9 +335,6 @@ DIB DIB::CaptureFromHDC(HDC sourceDC,
 
 bool DIB::ConvertToGrayscale(HDC dc, HANDLE section) {
   bool ret = false;
-  const float B2YF = 0.114f;
-  const float G2YF = 0.587f;
-  const float R2YF = 0.299f;
   const auto &bi = GetBitmapInfo();
   if (bitmap_
       && info_
@@ -354,9 +353,8 @@ bool DIB::ConvertToGrayscale(HDC dc, HANDLE section) {
       auto bitsDst = reinterpret_cast<LPBYTE>(grayscale.bits_)
                      + grayscale.lineSizeInBytes_ * y;
       for (DWORD x = 0; x < width; ++x) {
-        *(bitsDst++) = static_cast<BYTE>(R2YF * bitsSrc->rgbRed
-                                         + G2YF * bitsSrc->rgbGreen
-                                         + B2YF * bitsSrc->rgbBlue);
+        const int c = bitsSrc->rgbRed + bitsSrc->rgbGreen + bitsSrc->rgbBlue;
+        *(bitsDst++) = static_cast<BYTE>(c / 3);
         ++bitsSrc;
       }
     }

@@ -434,12 +434,10 @@ void BatchRun(std::istream &is,
                             image2,
                             output,
                             /*diffImage*/nullptr)) {
-            Log(L"%hs\t%hs\t%f\t%f\t%f\n",
+            Log(L"%hs\t%hs\t%f\n",
                 cols[colId].c_str(),
                 cols[colUrl].c_str(),
-                output.psnr_area_vs_smooth,
-                output.psnr_target_vs_area,
-                output.psnr_target_vs_smooth);
+                output.psnr_area_vs_smooth);
           }
         }
         else {

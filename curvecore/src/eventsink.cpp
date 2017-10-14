@@ -132,7 +132,9 @@ STDMETHODIMP EventSink::Invoke(_In_  DISPID dispIdMember,
         Log(L"Received DWebBrowserEvents2.DocumentComplete: %s\n",
             pDispParams->rgvarg[0].pvarVal->bstrVal);
         LPCWSTR SuppressAlert = L"window.alert=function(){};"
-                                L"window.confirm=function(){};";
+                                L"window.confirm=function(){};"
+                                L"window.open=function(){};"
+                                L"window.close=function(){};";
         if (!InjectScriptElement(wb, SuppressAlert)) {
           Log(L"Failed to inject the script code.\n");
         }
